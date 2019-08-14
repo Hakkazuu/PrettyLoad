@@ -2,7 +2,7 @@
 
 `PrettyLoad` is a library for animate views while loading data.
 
-![](https://imgur.com/a/fQC22ja)
+![](https://i.imgur.com/FudCG4g.gif)
 
 ## **Integration**
 
@@ -48,10 +48,10 @@ As example:
 In example `rounded_background.xml` contains:
 ```xml
     <?xml version="1.0" encoding="utf-8"?>
-	<shape xmlns:android="http://schemas.android.com/apk/res/android">
-	    <solid android:color="@android:color/white" />
-	    <corners android:radius="4dp" />
-	</shape>
+    <shape xmlns:android="http://schemas.android.com/apk/res/android">
+	<solid android:color="@android:color/white" />
+	<corners android:radius="4dp" />
+    </shape>
 ```
 
 Finally, call `PrettyLoad.start()` when something is loading and `PrettyLoad.stop()` after data is ready.
