@@ -17,7 +17,7 @@ repositories {
 
 In module `build.gradle`:
 ```groovy
-compile 'com.github.hakkazuu:prettyload:0.0.1'
+compile 'com.github.hakkazuu:prettyload:0.0.2'
 ```
 
 ## **How to use**
