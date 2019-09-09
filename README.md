@@ -20,7 +20,10 @@ In module `build.gradle`:
 compile 'com.github.hakkazuu:prettyload:0.0.1'
 ```
 
-## **Sample**
+## **How to use**
+
+#### **Quick start**
+
 First, use `@MakePretty` annotation for target views:
 ```java
     @MakePretty private TextView prettyTextView;
@@ -55,6 +58,11 @@ In example `rounded_background.xml` contains:
 ```
 
 Finally, call `PrettyLoad.start()` when something is loading and `PrettyLoad.stop()` after data is ready.
+
+#### **Tags**
+You can use annotation `@MakePretty(tag = "STRING")` with specified tag and calling `PrettyLoad.start(String tag)`/`PrettyLoad.stop(String tag)` to animate tagged views.
+
+*But `PrettyLoad.start()`/`PrettyLoad.stop()` will ignore these tags!*
 
 ## **License**
 
