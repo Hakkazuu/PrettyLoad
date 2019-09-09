@@ -15,6 +15,12 @@ import java.util.List;
 
 /**
  * Created by hakkazuu on 2019-07-14 at 19:14.
+ * todo
+ * 1. default drawable
+ * 2. default colors
+ * 3. checking ems or set size while loading
+ * 4. загрузка по тегам, в пределах одной активити или одного фрагмента помечать тегами в @MakePretty
+ *    при start(String TAG) запускать загрузки нужных view
  */
 public class PrettyLoad {
 
@@ -54,29 +60,40 @@ public class PrettyLoad {
     }
 
     public static void start() {
+        start(null);
+    }
+
+    public static void start(String tag) {
         if(!mInstance.mColorList.isEmpty()) {
             for (int index = 0; index < mInstance.mDeclaredViewArray.size(); index++) {
                 DeclaredView declaredView = mInstance.mDeclaredViewArray.valueAt(index);
-
-                declaredView.setAnimator(ValueAnimator.ofObject(new ArgbEvaluator(), mInstance.mColorList.toArray()));
-                declaredView.getAnimator().setDuration(mInstance.mDuration);
-                declaredView.getAnimator().setRepeatMode(ValueAnimator.REVERSE);
-                declaredView.getAnimator().setRepeatCount(ValueAnimator.INFINITE);
-                declaredView.getAnimator().addUpdateListener(animator -> {
-                    Drawable drawable;
-                    if(mInstance.mDrawableId != 0) drawable = getResources().getDrawable(mInstance.mDrawableId);
-                    else drawable = declaredView.getOldBackground();
-                    drawable.setColorFilter((int) animator.getAnimatedValue(), PorterDuff.Mode.SRC_ATOP);
-                    declaredView.getView().setBackground(drawable);
-                });
-                declaredView.getAnimator().start();
+                if(tag == null || declaredView.mAnnotation.tag().equals(tag)) {
+                    declaredView.setAnimator(ValueAnimator.ofObject(new ArgbEvaluator(), mInstance.mColorList.toArray()));
+                    declaredView.getAnimator().setDuration(mInstance.mDuration);
+                    declaredView.getAnimator().setRepeatMode(ValueAnimator.REVERSE);
+                    declaredView.getAnimator().setRepeatCount(ValueAnimator.INFINITE);
+                    declaredView.getAnimator().addUpdateListener(animator -> {
+                        Drawable drawable;
+                        if(mInstance.mDrawableId != 0) drawable = getResources().getDrawable(mInstance.mDrawableId);
+                        else drawable = declaredView.getOldBackground();
+                        drawable.setColorFilter((int) animator.getAnimatedValue(), PorterDuff.Mode.SRC_ATOP);
+                        declaredView.getView().setBackground(drawable);
+                    });
+                    declaredView.getAnimator().start();
+                }
             }
         }
     }
 
     public static void stop() {
+        stop(null);
+    }
+
+    public static void stop(String tag) {
         for (int index = 0; index < mInstance.mDeclaredViewArray.size(); index++) {
-            mInstance.mDeclaredViewArray.valueAt(index).stop();
+            if(tag == null || mInstance.mDeclaredViewArray.valueAt(index).mAnnotation.tag().equals(tag)) {
+                mInstance.mDeclaredViewArray.valueAt(index).stop();
+            }
         }
     }
 
@@ -158,7 +175,7 @@ public class PrettyLoad {
         }
 
         public void stop() {
-            mAnimator.end();
+            if(mAnimator != null) mAnimator.end();
             mView.setBackground(mOldBackground);
         }
     }

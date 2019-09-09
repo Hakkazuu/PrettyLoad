@@ -14,6 +14,6 @@ public @interface MakePretty {
 
     boolean isPretty() default true;
 
-    boolean ignoreChilds() default false;
+    String tag() default "";
 
 }

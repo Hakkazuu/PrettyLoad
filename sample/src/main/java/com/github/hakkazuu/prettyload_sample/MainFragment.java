@@ -21,13 +21,17 @@ import java.util.List;
  */
 public class MainFragment extends Fragment {
 
+    private static final String MAIN_TAG = "MAIN";
+    private static final String SECONDARY_TAG = "SECONDARY";
+
     private View mView;
 
-    @MakePretty private TextView prettyTextView1;
-    @MakePretty private TextView prettyTextView2;
-    @MakePretty private TextView prettyTextView3;
+    @MakePretty(tag = MAIN_TAG) private TextView prettyTextView1;
+    @MakePretty(tag = MAIN_TAG) private TextView prettyTextView2;
+    @MakePretty(tag = SECONDARY_TAG) private TextView prettyTextView3;
 
-    private boolean isLoading = false;
+    private boolean isMainLoading = false;
+    private boolean isSecondaryLoading = false;
 
     public MainFragment() {
         // Required empty public constructor
@@ -47,12 +51,45 @@ public class MainFragment extends Fragment {
                 .setDuration(1000)
                 .setColors(R.color.green1, R.color.green2);
 
-        Button button = mView.findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
+        Button button1 = mView.findViewById(R.id.button1);
+        button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isLoading = !isLoading;
-                if(isLoading) {
+                isMainLoading = !isMainLoading;
+                if(isMainLoading) {
+                    prettyTextView1.setText(null);
+                    prettyTextView2.setText(null);
+                    PrettyLoad.start(MAIN_TAG);
+                } else {
+                    prettyTextView1.setText("Hakkazuu");
+                    prettyTextView2.setText("PrettyLoad");
+                    PrettyLoad.stop(MAIN_TAG);
+                }
+            }
+        });
+
+        Button button2 = mView.findViewById(R.id.button2);
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isSecondaryLoading = !isSecondaryLoading;
+                if(isSecondaryLoading) {
+                    prettyTextView3.setText(null);
+                    PrettyLoad.start(SECONDARY_TAG);
+                } else {
+                    prettyTextView3.setText("more...");
+                    PrettyLoad.stop(SECONDARY_TAG);
+                }
+            }
+        });
+
+        Button button3 = mView.findViewById(R.id.button3);
+        button3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isMainLoading = !isMainLoading;
+                isSecondaryLoading = !isSecondaryLoading;
+                if(isMainLoading & isSecondaryLoading) {
                     prettyTextView1.setText(null);
                     prettyTextView2.setText(null);
                     prettyTextView3.setText(null);

@@ -21,7 +21,6 @@ public class MainActivity extends AppCompatActivity {
 
     @MakePretty private TextView textView1;
     @MakePretty private EditText editText2;
-    @MakePretty private List<String> kek = new ArrayList<>();
 
     private boolean isLoading = false;
 
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
                 .setDuration(1000)
                 .setColors(R.color.green1, R.color.green2, R.color.green3);
 
-        Button button = findViewById(R.id.button);
+        Button button = findViewById(R.id.button1);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
