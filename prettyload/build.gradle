@@ -2,13 +2,13 @@ apply plugin: 'com.novoda.bintray-release'
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 28
-        versionCode 2
-        versionName "0.0.2"
+        targetSdkVersion 29
+        versionCode 3
+        versionName "0.0.3"
     }
 
     buildTypes {
@@ -29,7 +29,7 @@ publish {
     userOrg = "hakkazuu"
     groupId = "com.github.hakkazuu"
     artifactId = "prettyload"
-    publishVersion = "0.0.2"
+    publishVersion = "0.0.3"
     desc = "Library for animate layout while loading data"
     licences = ["Apache-2.0"]
     uploadName = "PrettyLoad"
