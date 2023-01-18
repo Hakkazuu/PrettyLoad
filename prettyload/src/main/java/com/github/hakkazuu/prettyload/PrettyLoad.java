@@ -1,183 +1,220 @@
 package com.github.hakkazuu.prettyload;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.util.SparseArray;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Created by hakkazuu on 2019-07-14 at 19:14.
- * todo
- * 1. default drawable
- * 2. default colors
- * 3. checking ems or set size while loading
- * 4. загрузка по тегам, в пределах одной активити или одного фрагмента помечать тегами в @MakePretty
- *    при start(String TAG) запускать загрузки нужных view
- */
 public class PrettyLoad {
 
-    private static PrettyLoad mInstance;
+    // todo убрать setAnimator из вью, сделать единый, методом с параметрами
+    // todo remove order, use ANIMATION_TYPE
+    // todo add view animation like @ViewAnimation
+    // todo add view animation like @ViewGroupAnimation
+
+    public static final int ANIMATION_TYPE_ALL_TOGETHER = 0;
+    public static final int ANIMATION_TYPE_VERTICAL_ORDER = 1;
+    public static final int ANIMATION_TYPE_HORIZONTAL_ORDER = 2;
+
+    public static final int ORIENTATION_HORIZONTAL = 0;
+    public static final int ORIENTATION_VERTICAL = 1;
+
+    static final int DEFAULT_ANIMATION_TYPE = ANIMATION_TYPE_ALL_TOGETHER;
+    static final int DEFAULT_DURATION = 500;
+    static final int DEFAULT_ORDER_DELAY = 100;
+    static final Placeholder DEFAULT_PLACEHOLDER = Placeholder.fromLayout(R.drawable.pretty_background, R.layout.pretty_placeholder);
+    static final int DEFAULT_PLACEHOLDER_COUNT = 5;
+    static final int DEFAULT_START_COLOR = R.color.pretty_start_color;
+    static final int DEFAULT_END_COLOR = R.color.pretty_end_color;
 
     private Context mContext;
-    private SparseArray<DeclaredView> mDeclaredViewArray = new SparseArray<>();
-    private int mDrawableId = 0;
-    private long mDuration = 500;
-    private List<Integer> mColorList = new ArrayList<>();
+    private Object mRootObject;
+    private SparseArray<? super PrettyItem> mPrettyItemArray = new SparseArray<>();
+    private int mAnimationType = DEFAULT_ANIMATION_TYPE;
+    private long mDuration = DEFAULT_DURATION;
+    private long mOrderDelay = DEFAULT_ORDER_DELAY;
+    private Placeholder mPlaceholder = DEFAULT_PLACEHOLDER;
+    private int mStartColorResId = DEFAULT_START_COLOR;
+    private int mEndColorResId = DEFAULT_END_COLOR;
+    private OnErrorListener mOnErrorListener = null;
 
     private PrettyLoad() {}
 
-    private PrettyLoad(Context context) {
+    private PrettyLoad(Context context, Object rootObject) {
         mContext = context;
+        mRootObject = rootObject;
     }
 
-    public static PrettyLoad init(Context context, Object rootObject) {
-        mInstance = new PrettyLoad(context);
-        mInstance.fillViewArray(rootObject);
-        return mInstance;
-    }
-
-    public PrettyLoad setDrawable(int drawableId) {
-        mInstance.mDrawableId = drawableId;
-        return mInstance;
-    }
-
-    public PrettyLoad setColors(int... colorIds) {
-        for(int id : colorIds) mInstance.mColorList.add(getResources().getColor(id));
-        return mInstance;
-    }
-
-    public PrettyLoad setDuration(long duration) {
-        mDuration = duration;
-        return mInstance;
-    }
-
-    public static void start() {
+    public void start() {
         start(null);
+        int[] i = {};
     }
 
-    public static void start(String tag) {
-        if(!mInstance.mColorList.isEmpty()) {
-            for (int index = 0; index < mInstance.mDeclaredViewArray.size(); index++) {
-                DeclaredView declaredView = mInstance.mDeclaredViewArray.valueAt(index);
-                if(tag == null || declaredView.mAnnotation.tag().equals(tag)) {
-                    declaredView.setAnimator(ValueAnimator.ofObject(new ArgbEvaluator(), mInstance.mColorList.toArray()));
-                    declaredView.getAnimator().setDuration(mInstance.mDuration);
-                    declaredView.getAnimator().setRepeatMode(ValueAnimator.REVERSE);
-                    declaredView.getAnimator().setRepeatCount(ValueAnimator.INFINITE);
-                    declaredView.getAnimator().addUpdateListener(animator -> {
-                        Drawable drawable;
-                        if(mInstance.mDrawableId != 0) drawable = getResources().getDrawable(mInstance.mDrawableId);
-                        else drawable = declaredView.getOldBackground();
-                        drawable.setColorFilter((int) animator.getAnimatedValue(), PorterDuff.Mode.SRC_ATOP);
-                        declaredView.getView().setBackground(drawable);
-                    });
-                    declaredView.getAnimator().start();
-                }
+    public void start(String tag) {
+        for (int index = 0; index < mPrettyItemArray.size(); ++index) {
+            if(tag == null) {
+                ((PrettyItem)mPrettyItemArray.valueAt(index)).start();
+            } else {
+                if(((PrettyItem)mPrettyItemArray.valueAt(index)).getTag().equals(tag))
+                    ((PrettyItem)mPrettyItemArray.valueAt(index)).start();
             }
         }
     }
 
-    public static void stop() {
+    public void stop() {
         stop(null);
     }
 
-    public static void stop(String tag) {
-        for (int index = 0; index < mInstance.mDeclaredViewArray.size(); index++) {
-            if(tag == null || mInstance.mDeclaredViewArray.valueAt(index).mAnnotation.tag().equals(tag)) {
-                mInstance.mDeclaredViewArray.valueAt(index).stop();
+    public void stop(String tag) {
+        for (int index = 0; index < mPrettyItemArray.size(); index++) {
+            if(tag == null) {
+                ((PrettyItem)mPrettyItemArray.valueAt(index)).stop();
+            } else {
+                if(((PrettyItem)mPrettyItemArray.valueAt(index)).getTag().equals(tag))
+                    ((PrettyItem)mPrettyItemArray.valueAt(index)).stop();
             }
         }
     }
 
-    private <V extends View> void fillViewArray(Object rootObject) {
-        for(Field field : rootObject.getClass().getDeclaredFields()) {
-            if(field.isAnnotationPresent(MakePretty.class)) {
-                MakePretty makePretty = field.getAnnotation(MakePretty.class);
-                if(makePretty.isPretty()) {
-                    field.setAccessible(true);
-                    try {
-                        V view = (V) field.get(rootObject);
-                        DeclaredView declaredView = new DeclaredView(view, makePretty);
-                        mDeclaredViewArray.append(declaredView.getId(), declaredView);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+    private void  fillViewArray() {
+        for(Field field : mRootObject.getClass().getDeclaredFields()) {
+            if(field.isAnnotationPresent(ViewAnimation.class)) {
+                ViewAnimation viewAnimation = field.getAnnotation(ViewAnimation.class);
+                field.setAccessible(true);
+                try {
+                    View view = (View) field.get(mRootObject);
+
+                    PrettyView prettyView = new PrettyView.Builder(view)
+                            .setTag(viewAnimation.tag())
+                            .setPlaceholder(viewAnimation.placeholderDrawableResId() == 0 ?
+                                    mPlaceholder
+                                    : Placeholder.fromDrawable(viewAnimation.placeholderDrawableResId()))
+                            .setColors(
+                                    viewAnimation.startColorResId() == 0 ? mStartColorResId : viewAnimation.startColorResId(),
+                                    viewAnimation.endColorResId() == 0 ? mEndColorResId : viewAnimation.endColorResId()
+                            )
+                            .setAnimationSettings(mDuration, mOrderDelay)
+                            .build();
+
+                    mPrettyItemArray.append(prettyView.getId(), prettyView);
+                } catch (Exception e) {
+                    if(mOnErrorListener != null)
+                        mOnErrorListener.error(e.getLocalizedMessage());
+
+                    e.printStackTrace();
+                }
+            } else if(field.isAnnotationPresent(ViewGroupAnimation.class)) {
+                ViewGroupAnimation viewGroupAnimation = field.getAnnotation(ViewGroupAnimation.class);
+                field.setAccessible(true);
+                try {
+                    ViewGroup viewGroup = (ViewGroup) field.get(mRootObject);
+
+                    PrettyViewGroup prettyViewGroup = new PrettyViewGroup.Builder(viewGroup)
+                            .setTag(viewGroupAnimation.tag())
+                            .setPlaceholder(viewGroupAnimation.placeholderLayoutResId() == 0 ?
+                                    mPlaceholder
+                                    : Placeholder.fromLayout(
+                                            viewGroupAnimation.placeholderDrawableResId() == 0 ? mPlaceholder.getDrawableResId() : viewGroupAnimation.placeholderDrawableResId(),
+                                            viewGroupAnimation.placeholderLayoutResId(),
+                                            viewGroupAnimation.placeholderLayoutViewIds()),
+                                    viewGroupAnimation.placeholderCount() == 0 ? DEFAULT_PLACEHOLDER_COUNT : viewGroupAnimation.placeholderCount())
+                            .setColors(
+                                    viewGroupAnimation.startColorResId() == 0 ? mStartColorResId : viewGroupAnimation.startColorResId(),
+                                    viewGroupAnimation.endColorResId() == 0 ? mEndColorResId : viewGroupAnimation.endColorResId()
+                            )
+                            .setOrientation(viewGroupAnimation.orientation())
+                            .setAnimationSettings(mDuration, mOrderDelay)
+                            .build();
+
+                    mPrettyItemArray.append(prettyViewGroup.getId(), prettyViewGroup);
+                } catch (Exception e) {
+                    if(mOnErrorListener != null)
+                        mOnErrorListener.error(e.getLocalizedMessage());
+
+                    e.printStackTrace();
                 }
             }
         }
     }
 
-    private static Context getContext() {
-        return mInstance.mContext;
+    private <I extends PrettyItem> void calculateOrder(I prettyItem) {
+        // todo
+        switch (mAnimationType) {
+            case ANIMATION_TYPE_ALL_TOGETHER:
+                break;
+            case ANIMATION_TYPE_VERTICAL_ORDER:
+                break;
+            case ANIMATION_TYPE_HORIZONTAL_ORDER:
+                break;
+        }
     }
 
-    private static Resources getResources() {
-        return mInstance.mContext.getResources();
+    public interface OnErrorListener {
+        void error(String error);
     }
 
-    private class DeclaredView {
+    public static class Builder {
 
-        private View mView;
-        private MakePretty mAnnotation;
-        private Drawable mOldBackground;
-        private ValueAnimator mAnimator;
+        private PrettyLoad mInstance = null;
 
-        private DeclaredView() {}
+        private Builder() {}
 
-        public DeclaredView(View view, MakePretty annotation) {
-            mView = view;
-            mOldBackground = view.getBackground();
-            mAnnotation = annotation;
+        public Builder(Context context, Object rootObject) {
+            mInstance = new PrettyLoad(context, rootObject);
         }
 
-        public int getId() {
-            return mView.getId();
+        public Builder setPlaceholderDrawable(int drawableResId) {
+            mInstance.mPlaceholder.setDrawableResId(drawableResId);
+
+            return this;
         }
 
-        public View getView() {
-            return mView;
+        public Builder setColors(int startColorResId, int endColorResId) {
+            mInstance.mStartColorResId = startColorResId;
+            mInstance.mEndColorResId = endColorResId;
+
+            return this;
         }
 
-        public void setView(View view) {
-            this.mView = view;
+        public Builder setAnimationSettings(int animationType, long duration) {
+            mInstance.mAnimationType = animationType;
+            mInstance.mDuration = duration;
+
+            return this;
         }
 
-        public MakePretty getAnnotation() {
-            return mAnnotation;
+        public Builder setOnErrorListener(OnErrorListener onErrorListener) {
+            mInstance.mOnErrorListener = onErrorListener;
+
+            return this;
         }
 
-        public void setAnnotation(MakePretty annotation) {
-            this.mAnnotation = annotation;
+        public Builder addViewAnimation(PrettyView prettyView) {
+
+            return this;
         }
 
-        public Drawable getOldBackground() {
-            return mOldBackground;
+        public Builder addViewGroupAnimation() {
+
+            return this;
         }
 
-        public void setOldBackground(Drawable oldBackground) {
-            this.mOldBackground = oldBackground;
+        public PrettyLoad build() {
+            mInstance.fillViewArray();
+            return mInstance;
         }
 
-        public ValueAnimator getAnimator() {
-            return mAnimator;
-        }
+    }
 
-        public void setAnimator(ValueAnimator animator) {
-            this.mAnimator = animator;
-        }
+    private Context getContext() {
+        return mContext;
+    }
 
-        public void stop() {
-            if(mAnimator != null) mAnimator.end();
-            mView.setBackground(mOldBackground);
-        }
+    private Resources getResources() {
+        return mContext.getResources();
     }
 
 }

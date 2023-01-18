@@ -1,14 +1,18 @@
-apply plugin: 'com.novoda.bintray-release'
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
-    compileSdkVersion 29
+
+    compileSdk 31
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 29
-        versionCode 3
-        versionName "0.0.3"
+        minSdk 21
+        targetSdk 31
+        versionCode 1
+        versionName "1.0"
+
+        consumerProguardFiles "proguard-rules.pro"
     }
 
     buildTypes {
@@ -18,24 +22,8 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-}
-
-publish {
-    userOrg = "hakkazuu"
-    groupId = "com.github.hakkazuu"
-    artifactId = "prettyload"
-    publishVersion = "0.0.3"
-    desc = "Library for animate layout while loading data"
-    licences = ["Apache-2.0"]
-    uploadName = "PrettyLoad"
-    website = "https://github.com/Hakkazuu/PrettyLoad"
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
 }

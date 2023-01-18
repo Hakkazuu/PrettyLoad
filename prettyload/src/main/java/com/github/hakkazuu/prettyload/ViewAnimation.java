@@ -5,15 +5,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Created by hakkazuu on 2019-07-14 at 19:31.
- */
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface MakePretty {
-
-    boolean isPretty() default true;
+public @interface ViewAnimation {
 
     String tag() default "";
+
+    int placeholderDrawableResId() default 0;
+
+    int startColorResId() default 0;
+
+    int endColorResId() default 0;
 
 }

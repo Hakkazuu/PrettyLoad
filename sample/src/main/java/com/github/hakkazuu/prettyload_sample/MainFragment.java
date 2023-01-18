@@ -1,107 +1,101 @@
 package com.github.hakkazuu.prettyload_sample;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.hakkazuu.prettyload.MakePretty;
+import com.github.hakkazuu.prettyload.ViewAnimation;
 import com.github.hakkazuu.prettyload.PrettyLoad;
+import com.github.hakkazuu.prettyload.ViewGroupAnimation;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-/**
- */
 public class MainFragment extends Fragment {
 
     private static final String MAIN_TAG = "MAIN";
     private static final String SECONDARY_TAG = "SECONDARY";
 
     private View mView;
+    private PrettyLoad mPrettyLoad;
 
-    @MakePretty(tag = MAIN_TAG) private TextView prettyTextView1;
-    @MakePretty(tag = MAIN_TAG) private TextView prettyTextView2;
-    @MakePretty(tag = SECONDARY_TAG) private TextView prettyTextView3;
+    private FrameLayout frameLayout;
+    @ViewAnimation() private TextView firstTextView;
+    @ViewAnimation() private TextView secondTextView;
+    @ViewAnimation() private Button firstButton;
+    @ViewAnimation() private Button secondButton;
+    @ViewAnimation() private Button thirdButton;
+    @ViewGroupAnimation(
+            placeholderLayoutResId = R.layout.item_user_placeholder,
+            placeholderLayoutViewIds = {
+                    R.id.item_user_placeholder_name_text_view,
+                    R.id.item_user_placeholder_country_text_view
+            }, orientation = PrettyLoad.ORIENTATION_VERTICAL)
+    private RecyclerView recyclerView;
+    private UserAdapter userAdapter;
 
-    private boolean isMainLoading = false;
-    private boolean isSecondaryLoading = false;
-
-    public MainFragment() {
-        // Required empty public constructor
-    }
-
+    public MainFragment() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        prettyTextView1 = mView.findViewById(R.id.pretty_text_view1);
-        prettyTextView2 = mView.findViewById(R.id.pretty_text_view2);
-        prettyTextView3 = mView.findViewById(R.id.pretty_text_view3);
+        frameLayout = mView.findViewById(R.id.fragment_main_frame_layout);
+        firstTextView = mView.findViewById(R.id.fragment_main_first_text_view);
+        secondTextView = mView.findViewById(R.id.fragment_main_second_text_view);
+        firstButton = mView.findViewById(R.id.fragment_main_first_button);
+        firstButton.setOnClickListener( view -> mPrettyLoad.start());
+        secondButton = mView.findViewById(R.id.fragment_main_second_button);
+        thirdButton = mView.findViewById(R.id.fragment_main_third_button);
 
-        PrettyLoad.init(getContext(), this)
-                .setDrawable(R.drawable.rounded_background)
-                .setDuration(1000)
-                .setColors(R.color.green1, R.color.green2);
+        recyclerView = mView.findViewById(R.id.fragment_main_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        userAdapter = new UserAdapter(Arrays.asList(
+              new User("Username 1", "Country 1"),
+              new User("Username 2", "Country 2"),
+              new User("Username 3", "Country 3"),
+              new User("Username 4", "Country 4"),
+              new User("Username 5", "Country 5"),
+              new User("Username 6", "Country 6")
+        ));
 
-        Button button1 = mView.findViewById(R.id.button1);
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                isMainLoading = !isMainLoading;
-                if(isMainLoading) {
-                    prettyTextView1.setText(null);
-                    prettyTextView2.setText(null);
-                    PrettyLoad.start(MAIN_TAG);
-                } else {
-                    prettyTextView1.setText("Hakkazuu");
-                    prettyTextView2.setText("PrettyLoad");
-                    PrettyLoad.stop(MAIN_TAG);
-                }
+        mPrettyLoad = new PrettyLoad.Builder(getContext(), this)
+                .setPlaceholderDrawable(R.drawable.rounded_white_background)
+                .setAnimationSettings(PrettyLoad.ANIMATION_TYPE_ALL_TOGETHER, 1000)
+                .setColors(R.color.gray1, R.color.gray2)
+                .setOnErrorListener(error -> Log.d("PRETTY_LOG", error))
+                .build();
+
+        new CountDownTimer(3000, 1000) {
+
+            public void onTick(long millisUntilFinished) {}
+
+            public void onFinish() {
+                mPrettyLoad.start();
             }
-        });
 
-        Button button2 = mView.findViewById(R.id.button2);
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                isSecondaryLoading = !isSecondaryLoading;
-                if(isSecondaryLoading) {
-                    prettyTextView3.setText(null);
-                    PrettyLoad.start(SECONDARY_TAG);
-                } else {
-                    prettyTextView3.setText("more...");
-                    PrettyLoad.stop(SECONDARY_TAG);
-                }
-            }
-        });
+        }.start();
 
-        Button button3 = mView.findViewById(R.id.button3);
-        button3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                isMainLoading = !isMainLoading;
-                isSecondaryLoading = !isSecondaryLoading;
-                if(isMainLoading & isSecondaryLoading) {
-                    prettyTextView1.setText(null);
-                    prettyTextView2.setText(null);
-                    prettyTextView3.setText(null);
-                    PrettyLoad.start();
-                } else {
-                    prettyTextView1.setText("Hakkazuu");
-                    prettyTextView2.setText("PrettyLoad");
-                    prettyTextView3.setText("more...");
-                    PrettyLoad.stop();
-                }
+        new CountDownTimer(10000, 1000) {
+
+            public void onTick(long millisUntilFinished) {}
+
+            public void onFinish() {
+                recyclerView.setAdapter(userAdapter);
+                mPrettyLoad.stop();
             }
-        });
+
+        }.start();
 
         return mView;
     }

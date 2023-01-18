@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="pretty_white">#FFFFFF</color>
+
+    <color name="pretty_start_color">#EAEAEA</color>
+    <color name="pretty_end_color">#CDCDCD</color>
+
+</resources>
